@@ -24,7 +24,7 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
-    ''
+    'apps.authentication'
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -58,7 +58,7 @@ TEMPLATES = [
     },
 ]
 
-AUTH_USER_MODEL = ""
+AUTH_USER_MODEL = "authentication.User"
 
 LANGUAGE_CODE = env("LANGUAGE_CODE")
 TIME_ZONE = env("TIME_ZONE")
