@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-primary: #2563eb;
+  --color-primary-600: #1d4ed8;
+  --color-primary-400: #60a5fa;
+  --color-primary-300: #93c5fd;
+  --color-primary-200: #bfdbfe;
+  --color-surface: #f8fafc;
+  --color-surface-dark: #0f172a;
+}
+
+body {
+  @apply bg-surface text-slate-900 dark:bg-surface-dark dark:text-slate-100 antialiased selection:bg-primary selection:text-white;
+}
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 dark:bg-slate-700 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-400 dark:bg-slate-600;
+}

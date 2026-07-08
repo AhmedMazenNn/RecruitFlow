@@ -39,7 +39,6 @@ dist/
 .eggs/
 
 # Django
-backend/apps/
 backend/db.sqlite3
 backend/*.sqlite3
 backend/media/
