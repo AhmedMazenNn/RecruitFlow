@@ -1,0 +1,4 @@
+from .env_setup import env
+
+CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
+CORS_ALLOW_CREDENTIALS = True
