@@ -1,8 +1,17 @@
 import React from 'react';
 import { Badge, type Tone } from './Badge';
-import { stageLabels } from '../../data/stages';
 import { stageTone } from '../../utils/format';
 import type { InterviewStatus, JobStatus, StageId } from '../../types/recruiting';
+
+const stageLabels: Record<StageId, string> = {
+  applied: 'Applied',
+  screening: 'Screening',
+  technical: 'Technical',
+  hr: 'HR Interview',
+  offer: 'Offer',
+  hired: 'Hired',
+  rejected: 'Rejected'
+};
 
 const jobTones: Record<JobStatus, Tone> = {
   draft: 'neutral',
