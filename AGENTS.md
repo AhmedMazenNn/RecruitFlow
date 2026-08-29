@@ -141,7 +141,7 @@ premature optimization, and adding technologies without a concrete use case.
 This is the **actual** current state (docs & code kept in sync during implementation).
 
 - **Monorepo**: `backend/` (Django + DRF) + `frontend/` (React + Vite + TS). Git root = repo root.
-- **Backend** provides the auth foundation plus modular settings scaffold:
+- **Backend** provides the auth + organizations/multi-tenancy foundation plus modular settings scaffold:
   - Modular settings split by focus under `config/settings/`: `auth.py`, `cors.py`,
     `django_core.py`, `email.py`, `env_setup.py`, `logging_config.py`, `rest_framework.py`,
     `storage.py`, with `base.py` aggregating them, plus `development.py` and `production.py`.
@@ -149,16 +149,28 @@ This is the **actual** current state (docs & code kept in sync during implementa
     (Swagger), `django-cors-headers`, `django-environ`, rotating file logging.
   - Custom `User` model lives at `apps/authentication/` (`AUTH_USER_MODEL = "authentication.User"`),
     with roles (Admin/Recruiter), avatar upload (Pillow), `RegisterSerializer`
-    (self-registration always creates a `recruiter`), `LogoutView` (blacklists the refresh token),
-    profile/change-password endpoints, role management for admins, an idempotent `seed_demo`
-    management command (one demo user per role, `Demo@123`; promotes existing superusers to `admin`),
-    and a pytest suite.
+    (self-registration always creates a `recruiter`; optional `organization_name` → auto-creates
+    an `Organization`, default `My Organization`, get-or-create by exact name), `LogoutView`
+    (blacklists the refresh token), profile/change-password endpoints, role management for admins,
+    an idempotent `seed_demo` management command (both demo users share one `RecruitFlow Demo`
+    org, `Demo@123`; promotes existing superusers to `admin`), and a pytest suite.
+  - **Tenant isolation (ADR-008)** is enforced: `apps/core` holds `TenantMiddleware` (sets
+    `request.organization` from the JWT) and `ScopedQuerysetMixin` (scopes org-owned ViewSets;
+    `is_superuser` bypasses). `apps/organizations` has the `Organization` model + endpoints.
+    Org A MUST NEVER access Org B's data — cross-org access returns **404** (never 403).
+  - `UserViewSet` is org-scoped: `GET /api/auth/users/` lists only the caller's org; role
+    change / toggle_active / retrieve / update / delete on another org's user → **404**.
+    Self endpoints (`me`, `me_partial`, `change_password`) are unscoped. Superusers bypass.
+  - `User.organization` is a nullable FK (`on_delete=SET_NULL`) as an app-level guarantee
+    every user gets an org at registration/seed; a backfill migration assigned every
+    pre-existing user an org (0 orphans).
   - Dev runs on **local PostgreSQL** (env-driven, see `backend/.env`; DB `recruitflow`),
     matching the production target.
   - Auth routes: `/api/auth/{login,refresh,verify,logout,register}/` and
     `/api/auth/users/{me,me_partial,change_password,toggle_active,role}/`;
     `PATCH /api/auth/users/{id}/role/` is admin-only (role `admin` **or** `is_superuser`; 403 otherwise);
-    Swagger at `/api/docs/`.
+    organization routes: `GET/PATCH /api/organizations/me/`, `GET /api/organizations/me/members/`
+    (admin-of-org); Swagger at `/api/docs/`.
 - **Frontend** has the UI design foundation plus a working auth flow:
   - Sign-in/sign-out via `AuthContext` (JWT in localStorage), route guard, `UserMenu` with the
     signed-in user and async logout, and a "My profile" account tab in `Settings`

@@ -62,9 +62,12 @@ RecruitFlow/
 
 > **Notes on current state:** The backend provides the auth foundation (custom `User`
 > model, JWT login/logout/register, profile & avatar management, change password) plus the
-> modular settings scaffold (PostgreSQL, Swagger, logging). The frontend ships the UI
-> foundation with a working auth flow (sign-in/sign-out, account profile in Settings) built
-> on the design components. See `AGENTS.md` → "Current Repository State".
+> modular settings scaffold (PostgreSQL, Swagger, logging) and the **organizations /
+> multi-tenancy foundation**: `Organization` model, org self-service endpoints, and strict
+> tenant isolation (middleware + queryset scoping; cross-org access returns 404). The
+> frontend ships the UI foundation with a working auth flow (sign-in/sign-out, account
+> profile in Settings) built on the design components. See `AGENTS.md` → "Current Repository
+> State".
 
 ---
 
@@ -133,7 +136,7 @@ flake8                       # lint
 
 #### Demo seed
 
-`python manage.py seed_demo` creates one demo user per role with known credentials. It is idempotent — safe to re-run (existing users are skipped) — and promotes any existing superuser to the `admin` role so the in-app admin page is accessible to them. Seeded users are fixtures for development, not secrets:
+`python manage.py seed_demo` creates one demo user per role with known credentials, all under one shared `RecruitFlow Demo` organization. It is idempotent — safe to re-run (existing users are skipped) — and promotes any existing superuser to the `admin` role so the in-app admin page is accessible to them. Seeded users are fixtures for development, not secrets:
 
 | Email | Role | Password |
 | --- | --- | --- |
@@ -156,14 +159,22 @@ npm run lint     # eslint
 - **OpenAPI Schema**: `http://localhost:8000/api/schema/`
 
 Authentication endpoints:
-- `POST /api/auth/register/` — create recruiter account
+- `POST /api/auth/register/` — create recruiter account (optional `organization_name`; default `My Organization`)
 - `POST /api/auth/login/` — obtain JWT token pair
 - `POST /api/auth/refresh/` — refresh access token
 - `POST /api/auth/verify/` — verify token validity
 - `POST /api/auth/logout/` — revoke refresh token (requires auth)
-- `GET /api/auth/users/me/` — current profile
+- `GET /api/auth/users/me/` — current profile (includes nested `organization`)
 - `PATCH /api/auth/users/me_partial/` — update profile / avatar
 - `POST /api/auth/users/change_password/` — change password
+
+Organization endpoints (tenant-scoped):
+- `GET /api/organizations/me/` — current user's organization
+- `PATCH /api/organizations/me/` — rename organization (org admin only)
+- `GET /api/organizations/me/members/` — list org members (org admin only)
+
+Listing/managing users (`/api/auth/users/`) is scoped to the caller's organization; accessing
+another org's user returns **404** (isolation). Superusers bypass scoping.
 
 ---
 
