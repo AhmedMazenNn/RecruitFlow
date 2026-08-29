@@ -3,11 +3,14 @@ from rest_framework import serializers
 
 from apps.authentication.models import User
 from apps.authentication.utils import avatar_filename, resize_avatar
+from apps.organizations.models import Organization
+from apps.organizations.serializers import OrganizationSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
     avatar = serializers.ImageField(write_only=True, required=False, allow_null=True)
     avatar_url = serializers.SerializerMethodField()
+    organization = OrganizationSerializer(read_only=True)
 
     class Meta:
         model = User
@@ -19,6 +22,7 @@ class UserSerializer(serializers.ModelSerializer):
             "role",
             "avatar",
             "avatar_url",
+            "organization",
             "is_active",
             "is_superuser",
             "created_at",
@@ -58,6 +62,9 @@ class UserSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
     password_confirm = serializers.CharField(write_only=True, min_length=8)
+    organization_name = serializers.CharField(
+        write_only=True, required=False, allow_blank=True
+    )
 
     class Meta:
         model = User
@@ -67,6 +74,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             "email",
             "password",
             "password_confirm",
+            "organization_name",
         ]
 
     def validate_email(self, value):
@@ -81,7 +89,12 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         password = validated_data.pop("password")
+        org_name = (
+            validated_data.pop("organization_name", "").strip() or "My Organization"
+        )
+        org, _ = Organization.objects.get_or_create(name=org_name)
         validated_data["role"] = User.Role.RECRUITER
+        validated_data["organization"] = org
         user = User(**validated_data)
         user.set_password(password)
         user.save()

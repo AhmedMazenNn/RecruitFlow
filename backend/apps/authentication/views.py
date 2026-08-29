@@ -13,6 +13,7 @@ from apps.authentication.serializers import (
     RegisterSerializer,
     UserSerializer,
 )
+from apps.core.scoping import ScopedQuerysetMixin
 
 
 class LogoutView(TokenBlacklistView):
@@ -35,13 +36,10 @@ class RegisterViewSet(viewsets.GenericViewSet):
         )
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(ScopedQuerysetMixin, viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated, CanManageUsers]
-
-    def get_queryset(self):
-        return User.objects.all()
 
     def get_permissions(self):
         if self.action in ("retrieve", "update", "partial_update", "destroy"):
