@@ -22,11 +22,13 @@ later specification decides otherwise.
 
 ## Target Users
 
-- **Organization Owner / Admin** — full organization access, settings, members, roles.
+- **Admin** — full organization access, settings, members, roles.
 - **Recruiter** — candidates, jobs, applications, interviews, notes, communication.
-- **Hiring Manager** — assigned jobs, relevant candidates, interview feedback.
-- **Interviewer** — assigned interviews, relevant candidate info, submit feedback.
-- _Potential future user_: **Candidate** (out of scope for V1).
+- _Future internal roles_: **Hiring Manager** (assigned jobs, relevant candidates, interview
+  feedback) and **Interviewer** (assigned interviews, relevant candidate info, submit feedback)
+  can be added later — V1 user accounts are **Admin** or **Recruiter** only.
+- _Potentially never a user_: **Candidate** — candidates are data managed by recruiters; they
+  do **not** log in to RecruitFlow.
 
 ## Core Domain Model
 
@@ -67,7 +69,8 @@ High-level scope:
 
 - **Organization management** — create org, settings, members, invite/remove users, assign roles.
 - **Authentication** — registration, login, logout, password reset, email verification, profile, password change. (Future: Google/Microsoft OAuth, SSO.)
-- **Authorization** — role-based access control (Admin, Recruiter, Hiring Manager, Interviewer). Rules MUST be explicit in specs.
+- **Authorization** — role-based access control, **Admin and Recruiter for V1** (Hiring Manager,
+  Interviewer addable later). Rules MUST be explicit in specs.
 - **Job management** — title, department, location, employment type, salary, description, requirements, hiring manager, status (Draft/Open/Paused/Closed/Archived).
 - **Candidate management** — name, email, phone, location, LinkedIn/GitHub/portfolio, skills, experience, education, resume/docs, notes, tags.
 - **Application management** — candidate, job, pipeline stage, recruiter, source, applied date, status, history.
@@ -135,23 +138,41 @@ premature optimization, and adding technologies without a concrete use case.
 
 ## Current Repository State (as inspected)
 
-This is the **actual** current state, which differs in places from the README (the README is
-partly stale and should be reconciled later).
+This is the **actual** current state (docs & code kept in sync during implementation).
 
 - **Monorepo**: `backend/` (Django + DRF) + `frontend/` (React + Vite + TS). Git root = repo root.
-- **Backend** is a **scaffold only** — no real domain implementation yet:
+- **Backend** provides the auth foundation plus modular settings scaffold:
   - Modular settings split by focus under `config/settings/`: `auth.py`, `cors.py`,
     `django_core.py`, `email.py`, `env_setup.py`, `logging_config.py`, `rest_framework.py`,
     `storage.py`, with `base.py` aggregating them, plus `development.py` and `production.py`.
-  - JWT auth (`djangorestframework-simplejwt`), `drf-spectacular` (Swagger), `django-cors-headers`,
-    `django-environ`, rotating file logging.
-  - **`AUTH_USER_MODEL` is empty** and **`apps/authentication/` has no source files** (only an
-    empty `migrations/`). No custom User model exists yet.
-  - `LOCAL_APPS` contains a stray empty string entry (clean up during implementation).
-  - Dev currently uses SQLite; **target is PostgreSQL** for dev and production (to reconcile).
-  - JWT endpoints live at `/api/auth/login/`, `/refresh/`, `/verify/`; Swagger at `/api/docs/`.
-- **Frontend** is a bare Vite scaffolding: `App.tsx` is empty; no routing, state, or UI
-  libraries installed yet.
+  - JWT auth (`djangorestframework-simplejwt` with refresh-token blacklist), `drf-spectacular`
+    (Swagger), `django-cors-headers`, `django-environ`, rotating file logging.
+  - Custom `User` model lives at `apps/authentication/` (`AUTH_USER_MODEL = "authentication.User"`),
+    with roles (Admin/Recruiter), avatar upload (Pillow), `RegisterSerializer`
+    (self-registration always creates a `recruiter`), `LogoutView` (blacklists the refresh token),
+    profile/change-password endpoints, role management for admins, an idempotent `seed_demo`
+    management command (one demo user per role, `Demo@123`; promotes existing superusers to `admin`),
+    and a pytest suite.
+  - Dev runs on **local PostgreSQL** (env-driven, see `backend/.env`; DB `recruitflow`),
+    matching the production target.
+  - Auth routes: `/api/auth/{login,refresh,verify,logout,register}/` and
+    `/api/auth/users/{me,me_partial,change_password,toggle_active,role}/`;
+    `PATCH /api/auth/users/{id}/role/` is admin-only (role `admin` **or** `is_superuser`; 403 otherwise);
+    Swagger at `/api/docs/`.
+- **Frontend** has the UI design foundation plus a working auth flow:
+  - Sign-in/sign-out via `AuthContext` (JWT in localStorage), route guard, `UserMenu` with the
+    signed-in user and async logout, and a "My profile" account tab in `Settings`
+    (`AccountPanel.tsx`: profile edit, avatar upload/remove, change password).
+  - Redesigned auth pages (`components/auth/AuthShell.tsx`, `pages/auth/Login.tsx` + `Register.tsx`)
+    use design primitives/tokens with motion; no external network images.
+  - `frontend/src/data/` and its mock-driven components were removed; every page without a backend
+    data source renders a styled "Coming soon" placeholder (`components/ui/ComingSoon.tsx`); only
+    auth pages, the Settings account tab, and the admin page are functional.
+  - Admin-only page at `/admin` (`pages/admin/AdminUsers.tsx`, `components/admin/UsersTable.tsx`):
+    paginated users list (name/email/role/status/created), activate/deactivate, change role;
+    `AdminRoute` redirects non-admins to `/` and the sidebar shows "Admin" only to admins.
+  - Stack: React, Vite, TypeScript, Tailwind CSS, React Router, TanStack Query, React Hook Form, Zod.
+  - Quality gates: `npm run build` + `npm run lint` (no test runner).
 
 ## Documentation & References
 

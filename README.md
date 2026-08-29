@@ -60,10 +60,11 @@ RecruitFlow/
 └── README.md
 ```
 
-> **Notes on current state:** The backend is a scaffold (modular settings, JWT, Swagger)
-> with no domain implementation yet. The frontend currently contains the **UI design
-> foundation** (components, pages, mock data) that features will be built onto. See
-> `AGENTS.md` → "Current Repository State".
+> **Notes on current state:** The backend provides the auth foundation (custom `User`
+> model, JWT login/logout/register, profile & avatar management, change password) plus the
+> modular settings scaffold (PostgreSQL, Swagger, logging). The frontend ships the UI
+> foundation with a working auth flow (sign-in/sign-out, account profile in Settings) built
+> on the design components. See `AGENTS.md` → "Current Repository State".
 
 ---
 
@@ -130,6 +131,15 @@ black . && isort .           # format
 flake8                       # lint
 ```
 
+#### Demo seed
+
+`python manage.py seed_demo` creates one demo user per role with known credentials. It is idempotent — safe to re-run (existing users are skipped) — and promotes any existing superuser to the `admin` role so the in-app admin page is accessible to them. Seeded users are fixtures for development, not secrets:
+
+| Email | Role | Password |
+| --- | --- | --- |
+| `admin@recruitflow.dev` | admin | `Demo@123` |
+| `recruiter@recruitflow.dev` | recruiter | `Demo@123` |
+
 ### Frontend
 
 ```bash
@@ -146,9 +156,14 @@ npm run lint     # eslint
 - **OpenAPI Schema**: `http://localhost:8000/api/schema/`
 
 Authentication endpoints:
+- `POST /api/auth/register/` — create recruiter account
 - `POST /api/auth/login/` — obtain JWT token pair
 - `POST /api/auth/refresh/` — refresh access token
 - `POST /api/auth/verify/` — verify token validity
+- `POST /api/auth/logout/` — revoke refresh token (requires auth)
+- `GET /api/auth/users/me/` — current profile
+- `PATCH /api/auth/users/me_partial/` — update profile / avatar
+- `POST /api/auth/users/change_password/` — change password
 
 ---
 
