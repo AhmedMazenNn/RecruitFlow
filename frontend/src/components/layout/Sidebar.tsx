@@ -9,14 +9,15 @@ import {
   LayoutDashboardIcon,
   LifeBuoyIcon,
   SettingsIcon,
+  ShieldIcon,
   UsersIcon,
   CalendarDaysIcon } from
 'lucide-react';
 import { Logo } from '../brand/Logo';
 import { WorkspaceSwitcher } from './WorkspaceSwitcher';
 import { UserMenu } from './UserMenu';
+import { useAuth } from '../../contexts/AuthContext';
 import { cn } from '../../utils/cn';
-import { notifications } from '../../data/activity';
 
 interface NavItem {
   to: string;
@@ -36,11 +37,14 @@ const primary: NavItem[] = [
 
 
 export function Sidebar({ onNavigate }: {onNavigate?: () => void;}) {
-  const unread = notifications.filter((n) => !n.read).length;
+  const { isAdmin } = useAuth();
 
   const secondary: NavItem[] = [
-  { to: '/notifications', label: 'Notifications', icon: <BellIcon className="h-4 w-4" />, badge: unread },
+  { to: '/notifications', label: 'Notifications', icon: <BellIcon className="h-4 w-4" /> },
   { to: '/settings', label: 'Settings', icon: <SettingsIcon className="h-4 w-4" /> }];
+
+  const admin: NavItem[] = [
+  { to: '/admin', label: 'Admin', icon: <ShieldIcon className="h-4 w-4" /> }];
 
 
   const linkClass = ({ isActive }: {isActive: boolean;}) =>
@@ -109,6 +113,24 @@ export function Sidebar({ onNavigate }: {onNavigate?: () => void;}) {
             </li>
           )}
         </ul>
+          {isAdmin &&
+        <ul className="space-y-0.5">
+            {admin.map((item) =>
+          <li key={item.to}>
+                <NavLink to={item.to} className={linkClass} onClick={onNavigate}>
+                  {({ isActive }) =>
+              <>
+                      <span className={cn(isActive ? 'text-brand' : 'text-ink-subtle')} aria-hidden>
+                        {item.icon}
+                      </span>
+                      <span className="flex-1">{item.label}</span>
+                    </>
+              }
+                </NavLink>
+              </li>
+            )}
+          </ul>
+        }
 
         <div className="mt-6 rounded-lg border border-border bg-surface p-3">
           <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">

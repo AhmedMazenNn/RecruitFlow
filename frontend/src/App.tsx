@@ -16,6 +16,7 @@ import { InterviewFeedback } from './pages/InterviewFeedback';
 import { Analytics } from './pages/Analytics';
 import { Notifications } from './pages/Notifications';
 import { Settings } from './pages/Settings';
+import { AdminUsers } from './pages/admin/AdminUsers';
 import { Login } from './pages/auth/Login';
 import { Register } from './pages/auth/Register';
 import { ForgotPassword } from './pages/auth/ForgetPassword';
@@ -40,6 +41,13 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
   if (loading) return <LoadingScreen />;
   if (isAuthenticated) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { isAdmin, loading } = useAuth();
+  if (loading) return <LoadingScreen />;
+  if (!isAdmin) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -72,6 +80,7 @@ export function App({ theme = 'light' }: AppProps) {
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/admin" element={<AdminRoute><AdminUsers /></AdminRoute>} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
             </Routes>
