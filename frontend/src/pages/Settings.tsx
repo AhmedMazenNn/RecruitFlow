@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   BellIcon,
   BuildingIcon,
@@ -6,10 +7,12 @@ import {
   KanbanSquareIcon,
   PlugIcon,
   ShieldCheckIcon,
+  UserRoundIcon,
   UsersIcon,
   UserCogIcon } from
 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
+import { AccountPanel } from '../components/settings/AccountPanel';
 import { OrganizationProfile } from '../components/settings/OrganizationProfile';
 import { TeamMembers } from '../components/settings/TeamMembers';
 import { RolesPermissions } from '../components/settings/RolesPermissions';
@@ -21,6 +24,7 @@ import { BillingPanel } from '../components/settings/BillingPanel';
 import { cn } from '../utils/cn';
 
 const sections = [
+{ id: 'account', label: 'My profile', icon: UserRoundIcon },
 { id: 'organization', label: 'Organization', icon: BuildingIcon },
 { id: 'team', label: 'Team members', icon: UsersIcon },
 { id: 'roles', label: 'Roles & permissions', icon: UserCogIcon },
@@ -32,7 +36,8 @@ const sections = [
 
 
 export function Settings() {
-  const [active, setActive] = useState('organization');
+  const [searchParams] = useSearchParams();
+  const [active, setActive] = useState(() => searchParams.get('tab') ?? 'organization');
 
   return (
     <div className="pb-10">
@@ -74,6 +79,7 @@ export function Settings() {
         </nav>
 
         <div className="min-w-0 flex-1">
+          {active === 'account' && <AccountPanel />}
           {active === 'organization' && <OrganizationProfile />}
           {active === 'team' && <TeamMembers />}
           {active === 'roles' && <RolesPermissions />}

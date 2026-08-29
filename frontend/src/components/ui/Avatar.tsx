@@ -8,6 +8,7 @@ interface AvatarProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
   ring?: boolean;
+  src?: string;
 }
 
 const sizes = {
@@ -18,21 +19,24 @@ const sizes = {
   xl: 'h-16 w-16 text-lg'
 };
 
-export function Avatar({ name, color = '#4F46E5', size = 'md', className, ring = false }: AvatarProps) {
-  return (
-    <span
-      className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-full font-semibold text-white',
-        sizes[size],
-        ring && 'ring-2 ring-surface',
-        className
-      )}
-      style={{ backgroundColor: color }}
-      aria-hidden>
-      
-      {initials(name)}
-    </span>);
+export function Avatar({ name, color = '#4F46E5', size = 'md', className, ring = false, src }: AvatarProps) {
+  const base = cn('inline-flex shrink-0 items-center justify-center rounded-full', sizes[size], color && !src && 'text-white font-semibold', ring && 'ring-2 ring-surface', className);
 
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        className={cn(base, 'object-cover bg-surface')}
+      />
+    );
+  }
+
+  return (
+    <span className={base} style={{ backgroundColor: color }} aria-hidden>
+      {initials(name)}
+    </span>
+  );
 }
 
 export function AvatarGroup({

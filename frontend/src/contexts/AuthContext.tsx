@@ -1,16 +1,21 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import api from '../services/api'
 
-interface User {
+export interface User {
   id: number
   first_name: string
   last_name: string
   email: string
-  role: 'admin' | 'recruiter' | 'hiring_manager' | 'candidate'
+  role: 'admin' | 'recruiter'
   avatar_url: string
   is_active: boolean
+  is_superuser?: boolean
   created_at: string
   updated_at: string
+}
+
+function isAdmin(user: User | null): boolean {
+  return user?.role === 'admin' || !!user?.is_superuser
 }
 
 interface AuthContextType {
@@ -18,8 +23,10 @@ interface AuthContextType {
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (data: RegisterData) => Promise<User>
-  logout: () => void
+  logout: () => Promise<void>
+  updateUser: (user: User) => void
   isAuthenticated: boolean
+  isAdmin: boolean
 }
 
 interface RegisterData {
@@ -28,7 +35,6 @@ interface RegisterData {
   email: string
   password: string
   password_confirm: string
-  role?: string
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -66,15 +72,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data
   }
 
-  const logout = () => {
+  const logout = async () => {
+    const refresh = localStorage.getItem('refresh_token')
+    if (refresh) {
+      try {
+        await api.post('/auth/logout/', { refresh })
+      } catch {
+        // best-effort: the token may already be blacklisted or expired
+      }
+    }
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
     setUser(null)
   }
 
+  const updateUser = (nextUser: User) => setUser(nextUser)
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, logout, isAuthenticated: !!user }}
+      value={{
+        user,
+        loading,
+        login,
+        register,
+        logout,
+        updateUser,
+        isAuthenticated: !!user,
+        isAdmin: isAdmin(user),
+      }}
     >
       {children}
     </AuthContext.Provider>
