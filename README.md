@@ -1,22 +1,30 @@
 # RecruitFlow
 
-**Recruitment Management Platform (ATS)** — A production-quality application for HR teams and recruiters to manage the complete hiring process.
+**Recruitment Management Platform (ATS)** — a multi-tenant recruitment management SaaS for
+small and medium-sized companies. One centralized workspace for jobs, candidates,
+applications, pipeline stages, interviews, feedback, documents, notes, communication, and
+analytics.
 
-Built with a **React + Vite** frontend and a **Django REST Framework** backend with PostgreSQL.
+Built with a **React + Vite + TypeScript** frontend and a **Django REST Framework** backend
+on **PostgreSQL**.
+
+> Full product & architecture context lives in [`AGENTS.md`](AGENTS.md). Git workflow and
+> contribution conventions live in [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md).
+> Architecture decisions live in [`docs/decisions/`](docs/decisions/).
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Backend | Python 3.12+, Django 6.0, Django REST Framework |
-| Database | PostgreSQL (production), SQLite (development) |
-| Auth | JWT (djangorestframework-simplejwt) |
-| API Docs | drf-spectacular (Swagger/OpenAPI) |
-| Frontend | React, Vite, TypeScript |
+| Layer      | Technology |
+|------------|------------|
+| Backend    | Python 3.12+, Django 6.0, Django REST Framework |
+| Database   | PostgreSQL (all environments — dev and production) |
+| Auth       | JWT (djangorestframework-simplejwt) |
+| API Docs   | drf-spectacular (Swagger/OpenAPI) |
+| Frontend   | React, Vite, TypeScript, Tailwind CSS, React Router |
 | Code Quality | Black, isort, flake8 |
-| Testing | pytest, pytest-django, pytest-cov |
+| Testing    | pytest, pytest-django, pytest-cov |
 
 ---
 
@@ -24,38 +32,39 @@ Built with a **React + Vite** frontend and a **Django REST Framework** backend w
 
 ```
 RecruitFlow/
-├── backend/
+├── backend/                 # Django + DRF API
 │   ├── apps/
-│   │   ├── __init__.py
-│   │   └── authentication/      # Custom User model
-│   │       ├── __init__.py
-│   │       ├── admin.py
-│   │       ├── apps.py
-│   │       └── models.py
 │   ├── config/
-│   │   ├── __init__.py
+│   │   ├── settings/        # Modular settings (base, development, production, auth, ...)
+│   │   ├── urls.py
 │   │   ├── asgi.py
-│   │   ├── urls.py               # Root URL configuration
-│   │   ├── wsgi.py
-│   │   └── settings/
-│   │       ├── __init__.py
-│   │       ├── base.py           # Shared settings (DRF, JWT, CORS, logging)
-│   │       ├── development.py    # Dev overrides (SQLite, debug, browsable API)
-│   │       └── production.py     # Production overrides (PostgreSQL, security)
+│   │   └── wsgi.py
 │   ├── logs/
-│   ├── .env                      # Environment variables (gitignored)
-│   ├── .env.example              # Environment variable template
-│   ├── conftest.py               # pytest configuration
+│   ├── .env.example
 │   ├── manage.py
-│   ├── pyproject.toml            # Tool configuration
-│   └── requirements.txt
-├── frontend/                     # React + Vite application
-│   ├── src/
-│   ├── package.json
-│   └── vite.config.ts
-├── .gitignore
+│   └── pyproject.toml
+├── frontend/                # React + Vite design foundation
+│   └── src/
+│       ├── components/
+│       ├── contexts/
+│       ├── data/            # Mock data (design foundation)
+│       ├── pages/
+│       ├── types/
+│       └── utils/
+├── docs/
+│   ├── decisions/           # ADRs
+│   └── CONTRIBUTING.md
+├── .specify/                # Spec Kit project state & templates
+├── .opencode/               # OpenCode custom commands (/speckit.*)
+├── AGENTS.md                # Persistent agent context
 └── README.md
 ```
+
+> **Notes on current state:** The backend provides the auth foundation (custom `User`
+> model, JWT login/logout/register, profile & avatar management, change password) plus the
+> modular settings scaffold (PostgreSQL, Swagger, logging). The frontend ships the UI
+> foundation with a working auth flow (sign-in/sign-out, account profile in Settings) built
+> on the design components. See `AGENTS.md` → "Current Repository State".
 
 ---
 
@@ -65,36 +74,21 @@ RecruitFlow/
 
 - Python 3.12+
 - Node.js 20+
-- PostgreSQL 16+ (optional for development — SQLite is used by default)
+- PostgreSQL 16+ (dev and production)
 
-### Backend Setup
+### Backend setup
 
 ```bash
-# Navigate to the backend directory
 cd backend
-
-# Create and activate a virtual environment
 python -m venv .venv
 source .venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Configure environment variables
-cp .env.example .env
-# Edit .env with your local values (defaults work for development)
-
-# Run migrations
+cp .env.example .env      # edit values (defaults work for development)
 python manage.py migrate
-
-# Create a superuser (optional, for admin access)
-python manage.py createsuperuser
-
-# Start the development server
 python manage.py runserver
 ```
 
-### Frontend Setup
+### Frontend setup
 
 ```bash
 cd frontend
@@ -106,115 +100,89 @@ npm run dev
 
 ## Environment Variables
 
+See [`backend/.env.example`](backend/.env.example) for the full list and defaults.
+
+Key variables:
+
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `SECRET_KEY` | Django secret key | *(required)* |
+| `SECRET_KEY` | Django secret key | *(required in prod)* |
 | `DEBUG` | Debug mode | `False` |
-| `ALLOWED_HOSTS` | Comma-separated allowed hosts | `[]` |
 | `DATABASE_NAME` | PostgreSQL database name | `recruitflow` |
 | `DATABASE_USER` | PostgreSQL user | `recruitflow_user` |
-| `DATABASE_PASSWORD` | PostgreSQL password | *(required)* |
 | `DATABASE_HOST` | PostgreSQL host | `localhost` |
 | `DATABASE_PORT` | PostgreSQL port | `5432` |
+| `FRONTEND_URL` | Frontend URL for CORS | `http://localhost:5173` |
 | `ACCESS_TOKEN_LIFETIME` | JWT access token lifetime (minutes) | `30` |
 | `REFRESH_TOKEN_LIFETIME` | JWT refresh token lifetime (days) | `1` |
-| `EMAIL_HOST` | SMTP host | `smtp.gmail.com` |
-| `EMAIL_PORT` | SMTP port | `587` |
-| `EMAIL_HOST_USER` | SMTP user | |
-| `EMAIL_HOST_PASSWORD` | SMTP password | |
-| `DEFAULT_FROM_EMAIL` | Default sender email | |
-| `FRONTEND_URL` | Frontend URL for CORS | `http://localhost:5173` |
-| `CORS_ALLOWED_ORIGINS` | CORS allowed origins | `http://localhost:5173` |
-| `TIME_ZONE` | Django timezone | `UTC` |
-| `LANGUAGE_CODE` | Django language code | `en-us` |
+
+> Never commit real `.env` files or secrets. Copy from `.env.example` and fill locally.
 
 ---
 
 ## Available Commands
 
-### Running the development server
+### Backend
 
 ```bash
-python manage.py runserver
+python manage.py runserver   # dev server
+pytest                       # tests
+black . && isort .           # format
+flake8                       # lint
 ```
 
-### Running tests
+#### Demo seed
+
+`python manage.py seed_demo` creates one demo user per role with known credentials. It is idempotent — safe to re-run (existing users are skipped) — and promotes any existing superuser to the `admin` role so the in-app admin page is accessible to them. Seeded users are fixtures for development, not secrets:
+
+| Email | Role | Password |
+| --- | --- | --- |
+| `admin@recruitflow.dev` | admin | `Demo@123` |
+| `recruiter@recruitflow.dev` | recruiter | `Demo@123` |
+
+### Frontend
 
 ```bash
-pytest
-```
-
-### Code formatting
-
-```bash
-black .
-```
-
-### Import sorting
-
-```bash
-isort .
-```
-
-### Linting
-
-```bash
-flake8
-```
-
-### Creating migrations
-
-```bash
-python manage.py makemigrations <app_name>
-```
-
-### Applying migrations
-
-```bash
-python manage.py migrate
+npm run dev      # dev server
+npm run build    # production build
+npm run lint     # eslint
 ```
 
 ---
 
 ## API Documentation
 
-Once the server is running:
+- **Swagger UI**: `http://localhost:8000/api/docs/`
+- **OpenAPI Schema**: `http://localhost:8000/api/schema/`
 
-- **Swagger UI**: http://localhost:8000/api/docs/
-- **OpenAPI Schema**: http://localhost:8000/api/schema/
-
-### Authentication Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/login/` | Obtain JWT token pair |
-| POST | `/api/auth/refresh/` | Refresh access token |
-| POST | `/api/auth/verify/` | Verify token validity |
-
----
-
-## Future Features
-
-- Candidate management
-- Job position management
-- Application tracking
-- Customizable hiring pipelines
-- Interview scheduling
-- Interview feedback collection
-- Recruiter task management
-- Email integration
-- Recruitment analytics
-- Role-based permissions
-- Multi-tenant SaaS support
-- Google Calendar integration
+Authentication endpoints:
+- `POST /api/auth/register/` — create recruiter account
+- `POST /api/auth/login/` — obtain JWT token pair
+- `POST /api/auth/refresh/` — refresh access token
+- `POST /api/auth/verify/` — verify token validity
+- `POST /api/auth/logout/` — revoke refresh token (requires auth)
+- `GET /api/auth/users/me/` — current profile
+- `PATCH /api/auth/users/me_partial/` — update profile / avatar
+- `POST /api/auth/users/change_password/` — change password
 
 ---
 
-## Contributing
+## Development Workflow (Spec Kit)
 
-1. Create a feature branch from `main`
-2. Make your changes
-3. Run tests: `pytest`
-4. Format code: `black . && isort .`
-5. Lint: `flake8`
-6. Open a pull request
+RecruitFlow is **specification-driven**. Features follow the Spec Kit workflow:
+
+```text
+Constitution → Specification → Clarification → Technical Plan → Tasks
+            → Analysis → Implementation → Testing → Review
+```
+
+See `docs/CONTRIBUTING.md` and `AGENTS.md` for details.
+
+---
+
+## Documentation
+
+- [`AGENTS.md`](AGENTS.md) — persistent agent/project context
+- [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) — git workflow & contribution guide
+- [`docs/decisions/`](docs/decisions/) — Architecture Decision Records
+- `specs/` — per-feature Spec Kit artifacts (created during feature work)

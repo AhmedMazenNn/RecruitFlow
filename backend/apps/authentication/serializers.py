@@ -1,9 +1,14 @@
+from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 from apps.authentication.models import User
+from apps.authentication.utils import avatar_filename, resize_avatar
 
 
 class UserSerializer(serializers.ModelSerializer):
+    avatar = serializers.ImageField(write_only=True, required=False, allow_null=True)
+    avatar_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
@@ -12,12 +17,42 @@ class UserSerializer(serializers.ModelSerializer):
             "last_name",
             "email",
             "role",
+            "avatar",
             "avatar_url",
             "is_active",
+            "is_superuser",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "created_at", "updated_at", "is_active"]
+        read_only_fields = [
+            "id",
+            "email",
+            "role",
+            "is_active",
+            "is_superuser",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_avatar_url(self, obj):
+        if not obj.avatar:
+            return ""
+        request = self.context.get("request")
+        url = obj.avatar.url
+        return request.build_absolute_uri(url) if request else url
+
+    def update(self, instance, validated_data):
+        if "avatar" in validated_data:
+            avatar = validated_data.pop("avatar")
+            if avatar is None and instance.avatar:
+                instance.avatar.delete(save=False)
+            elif avatar is not None:
+                instance.avatar.save(
+                    avatar_filename(instance.pk),
+                    ContentFile(resize_avatar(avatar), avatar_filename(instance.pk)),
+                    save=False,
+                )
+        return super().update(instance, validated_data)
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -32,7 +67,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             "email",
             "password",
             "password_confirm",
-            "role",
         ]
 
     def validate_email(self, value):
@@ -47,10 +81,20 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         password = validated_data.pop("password")
+        validated_data["role"] = User.Role.RECRUITER
         user = User(**validated_data)
         user.set_password(password)
         user.save()
         return user
+
+
+class ChangeUserRoleSerializer(serializers.Serializer):
+    role = serializers.ChoiceField(choices=User.Role.choices)
+
+    def update(self, instance, validated_data):
+        instance.role = validated_data["role"]
+        instance.save(update_fields=["role"])
+        return instance
 
 
 class ChangePasswordSerializer(serializers.Serializer):
