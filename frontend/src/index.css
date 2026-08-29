@@ -1,33 +1,122 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* @import url() FONT IMPORTS MUST ALWAYS BE AT THE VERY TOP OF THIS FILE, ABOVE THE TAILWIND IMPORTS — DO NOT DELETE THIS COMMENT */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-@import 'tailwindcss';
+/* CRITICAL: THE FOLLOWING TAILWIND IMPORTS MUST NEVER BE DELETED OR REORDERED — DO NOT DELETE THIS COMMENT */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* END TAILWIND IMPORTS — ALL OTHER CSS MUST GO BELOW THIS LINE */
 
-@theme {
-  --color-primary: #2563eb;
-  --color-primary-600: #1d4ed8;
-  --color-primary-400: #60a5fa;
-  --color-primary-300: #93c5fd;
-  --color-primary-200: #bfdbfe;
-  --color-surface: #f8fafc;
-  --color-surface-dark: #0f172a;
+:root {
+  --rf-canvas: 247 248 250;
+  --rf-surface: 255 255 255;
+  --rf-subtle: 243 244 248;
+  --rf-elevated: 255 255 255;
+  --rf-border: 229 231 239;
+  --rf-border-strong: 210 214 226;
+  --rf-text: 20 23 33;
+  --rf-text-muted: 92 99 118;
+  --rf-text-subtle: 138 145 163;
+  --rf-text-invert: 255 255 255;
+  --rf-navy: 26 30 60;
+  --rf-brand: 79 70 229;
+  --rf-brand-hover: 67 56 202;
+  --rf-brand-soft: 238 240 255;
+  --rf-brand-ring: 165 175 252;
+  --rf-brand-fg: 255 255 255;
+  --rf-accent: 139 92 246;
+  --rf-accent-soft: 244 240 255;
+  --rf-success: 22 145 96;
+  --rf-success-soft: 230 248 240;
+  --rf-success-fg: 12 108 71;
+  --rf-warning: 202 138 4;
+  --rf-warning-soft: 254 246 224;
+  --rf-warning-fg: 146 96 4;
+  --rf-danger: 219 55 71;
+  --rf-danger-soft: 254 236 238;
+  --rf-danger-fg: 176 36 51;
+  --rf-info: 14 132 200;
+  --rf-info-soft: 232 245 254;
+  --rf-info-fg: 12 104 158;
+  --rf-shadow: 22 27 45;
 }
-
+.dark {
+  --rf-canvas: 12 14 20;
+  --rf-surface: 22 25 34;
+  --rf-subtle: 30 34 46;
+  --rf-elevated: 28 32 43;
+  --rf-border: 40 45 60;
+  --rf-border-strong: 56 62 80;
+  --rf-text: 236 238 245;
+  --rf-text-muted: 155 162 180;
+  --rf-text-subtle: 118 125 143;
+  --rf-text-invert: 12 14 20;
+  --rf-navy: 232 234 245;
+  --rf-brand: 129 130 248;
+  --rf-brand-hover: 150 150 250;
+  --rf-brand-soft: 38 40 68;
+  --rf-brand-ring: 106 106 220;
+  --rf-brand-fg: 15 16 28;
+  --rf-accent: 167 132 250;
+  --rf-accent-soft: 45 38 70;
+  --rf-success: 52 189 132;
+  --rf-success-soft: 20 46 38;
+  --rf-success-fg: 106 224 172;
+  --rf-warning: 227 167 42;
+  --rf-warning-soft: 51 40 18;
+  --rf-warning-fg: 243 197 90;
+  --rf-danger: 240 104 118;
+  --rf-danger-soft: 56 26 32;
+  --rf-danger-fg: 250 154 164;
+  --rf-info: 74 172 236;
+  --rf-info-soft: 18 39 54;
+  --rf-info-fg: 126 200 246;
+  --rf-shadow: 0 0 0;
+}
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+}
 body {
-  @apply bg-surface text-slate-900 dark:bg-surface-dark dark:text-slate-100 antialiased selection:bg-primary selection:text-white;
+  background-color: rgb(var(--rf-canvas));
+  color: rgb(var(--rf-text));
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'cv11', 'ss01';
+  font-variant-numeric: tabular-nums;
 }
-/* Custom Scrollbar */
-::-webkit-scrollbar {
+*:focus-visible {
+  outline: 2px solid rgb(var(--rf-brand));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.rf-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--rf-border-strong)) transparent;
+}
+.rf-scroll::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
-::-webkit-scrollbar-track {
+.rf-scroll::-webkit-scrollbar-thumb {
+  background-color: rgb(var(--rf-border-strong));
+  border-radius: 999px;
+}
+.rf-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
-::-webkit-scrollbar-thumb {
-  @apply bg-slate-300 dark:bg-slate-700 rounded-full;
+.rf-grid-bg {
+  background-image: radial-gradient(rgb(var(--rf-border-strong) / 0.7) 1px, transparent 1px);
+  background-size: 22px 22px;
 }
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-400 dark:bg-slate-600;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
