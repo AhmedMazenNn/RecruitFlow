@@ -22,6 +22,7 @@ urlpatterns = [
     path("api/auth/verify/", TokenVerifyView.as_view(), name="token_verify"),
     path("api/auth/logout/", LogoutView.as_view(), name="logout"),
     path("api/auth/", include("apps.authentication.urls")),
+    path("api/", include("apps.organizations.urls")),
     # API documentation
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(

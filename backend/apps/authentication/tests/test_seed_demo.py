@@ -3,7 +3,7 @@ from io import StringIO
 from django.core.management import call_command
 
 from apps.authentication.models import User
-
+from apps.organizations.models import Organization
 
 DEMO_USERS = {
     "admin@recruitflow.dev": User.Role.ADMIN,
@@ -47,3 +47,24 @@ def test_seed_demo_promotes_existing_superuser_to_admin(db):
 
     superuser = User.objects.get(email="super@recruitflow.dev")
     assert superuser.role == User.Role.ADMIN
+
+
+def test_seed_demo_users_share_demo_organization(db):
+    run_seed_demo()
+
+    users = User.objects.filter(email__in=DEMO_USERS)
+    org_ids = {user.organization_id for user in users}
+    assert None not in org_ids
+    assert len(org_ids) == 1
+    org = Organization.objects.get(pk=users[0].organization_id)
+    assert org.name == "RecruitFlow Demo"
+
+
+def test_seed_demo_keeps_demo_organization_on_repeat_run(db):
+    run_seed_demo()
+    demo_org = Organization.objects.get(name="RecruitFlow Demo")
+    run_seed_demo()
+
+    assert Organization.objects.filter(name="RecruitFlow Demo").count() == 1
+    for user in User.objects.filter(email__in=DEMO_USERS):
+        assert user.organization_id == demo_org.pk

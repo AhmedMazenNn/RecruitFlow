@@ -40,6 +40,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=150)
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.RECRUITER)
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        related_name="members",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

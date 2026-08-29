@@ -7,6 +7,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from apps.authentication.models import User
+from apps.organizations.models import Organization
 
 
 def make_png_bytes(color=(255, 0, 0), size=(512, 512)):
@@ -57,6 +58,20 @@ def test_me_returns_own_data(db):
     assert response.data["email"] == user.email
     assert response.data["role"] == user.role
     assert response.data["avatar_url"] == ""
+
+
+def test_me_includes_organization(db):
+    org = Organization.objects.create(name="Northwind")
+    user = create_user()
+    user.organization = org
+    user.save(update_fields=["organization"])
+    client = auth_client(user)
+
+    response = client.get("/api/auth/users/me/")
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data["organization"]["id"] == org.pk
+    assert response.data["organization"]["name"] == "Northwind"
 
 
 def test_me_partial_updates_name(db):
