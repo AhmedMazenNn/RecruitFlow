@@ -35,16 +35,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     class Role(models.TextChoices):
         ADMIN = "admin", "Admin"
         RECRUITER = "recruiter", "Recruiter"
-        HIRING_MANAGER = "hiring_manager", "Hiring Manager"
-        CANDIDATE = "candidate", "Candidate"
 
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
     email = models.EmailField(unique=True)
-    role = models.CharField(
-        max_length=20, choices=Role.choices, default=Role.CANDIDATE
-    )
-    avatar_url = models.URLField(blank=True, default="")
+    role = models.CharField(max_length=20, choices=Role.choices, default=Role.RECRUITER)
+    avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

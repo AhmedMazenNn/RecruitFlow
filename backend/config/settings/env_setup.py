@@ -14,6 +14,11 @@ env = environ.Env(
     FRONTEND_URL=(str, "http://localhost:5173"),
     TIME_ZONE=(str, "UTC"),
     LANGUAGE_CODE=(str, "en-us"),
+    DATABASE_NAME=(str, "recruitflow"),
+    DATABASE_USER=(str, "recruitflow_user"),
+    DATABASE_PASSWORD=(str, ""),
+    DATABASE_HOST=(str, "localhost"),
+    DATABASE_PORT=(str, "5432"),
 )
 
 env.read_env(BASE_DIR / ".env")

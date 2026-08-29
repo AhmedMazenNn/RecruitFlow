@@ -2,14 +2,22 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.views import TokenBlacklistView
 
 from apps.authentication.models import User
-from apps.authentication.permissions import CanManageUsers, IsOwnerOrAdmin
+from apps.authentication.permissions import CanManageUsers, IsAdmin, IsOwnerOrAdmin
 from apps.authentication.serializers import (
     ChangePasswordSerializer,
+    ChangeUserRoleSerializer,
     RegisterSerializer,
     UserSerializer,
 )
+
+
+class LogoutView(TokenBlacklistView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
 
 class RegisterViewSet(viewsets.GenericViewSet):
@@ -33,16 +41,13 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, CanManageUsers]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.role == "admin":
-            return User.objects.all()
-        if user.role == "recruiter":
-            return User.objects.all()
-        return User.objects.filter(pk=user.pk)
+        return User.objects.all()
 
     def get_permissions(self):
         if self.action in ("retrieve", "update", "partial_update", "destroy"):
             return [IsAuthenticated(), IsOwnerOrAdmin()]
+        if self.action in ("me_partial", "change_password"):
+            return [IsAuthenticated()]
         return super().get_permissions()
 
     @action(detail=False, methods=["get"])
@@ -52,9 +57,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["patch"])
     def me_partial(self, request):
-        serializer = self.get_serializer(
-            request.user, data=request.data, partial=True
-        )
+        serializer = self.get_serializer(request.user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
@@ -80,4 +83,17 @@ class UserViewSet(viewsets.ModelViewSet):
         user = self.get_object()
         user.is_active = not user.is_active
         user.save()
+        return Response(self.get_serializer(user).data)
+
+    @action(
+        detail=True,
+        methods=["patch"],
+        permission_classes=[IsAuthenticated, IsAdmin],
+        url_path="role",
+    )
+    def update_role(self, request, pk=None):
+        user = self.get_object()
+        serializer = ChangeUserRoleSerializer(user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(self.get_serializer(user).data)
